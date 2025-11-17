@@ -89,8 +89,8 @@ async function loadUsers() {
       const defaultAdmin = {
         __backendId: generateId(),
         fullName: 'شهاب حمیدی',
-        username: 'shahab',
-        password: 'em',
+        username: 'admin',
+        password: 'admin123',
         role: 'admin'
       };
       allUsers.push(defaultAdmin);
@@ -145,7 +145,7 @@ async function deleteUser(userId) {
     return { isOk: false };
   }
   const user = allUsers.find(u => u.__backendId === userId);
-  if (!user || user.username === 'shahab') {
+  if (!user || user.username === 'admin') {
     showToast('نمی‌توان اکانت شهاب حمیدی را حذف کرد', '⚠️');
     return { isOk: false };
   }
@@ -196,8 +196,8 @@ async function syncUsersWithGoogleSheets() {
         const defaultAdmin = {
           __backendId: generateId(),
           fullName: 'شهاب حمیدی',
-          username: 'shahab',
-          password: 'em',
+          username: 'admin',
+          password: 'admin123',
           role: 'admin'
         };
         gsUsers.push(defaultAdmin);
@@ -1431,3 +1431,4 @@ if (window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'lo
   (function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99bbf8eb8072d381',t:'MTc2MjY3NzI4MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
 
 }
+
