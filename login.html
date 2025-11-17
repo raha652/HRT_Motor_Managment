@@ -46,43 +46,49 @@
     async function loadUsers() {
       try {
         const stored = localStorage.getItem(usersStorageKey);
-        // FIX: چک برای undefined/null و try-catch برای JSON.parse
+        // FIX: بهبود handling برای undefined/null و parse error
         if (!stored) {
+          console.log('No localStorage users found – starting fresh');
           allUsers = [];
         } else {
           try {
             allUsers = JSON.parse(stored);
+            console.log('Parsed local users successfully:', allUsers.length, 'users');
           } catch (parseError) {
-            console.error('JSON parse error in localStorage:', parseError);
-            allUsers = []; // fallback به خالی
-            localStorage.removeItem(usersStorageKey); // پاک کردن corrupted data
+            console.error('JSON parse error in localStorage – clearing corrupted data:', parseError);
+            allUsers = []; // fallback
+            localStorage.removeItem(usersStorageKey); // پاک کردن corrupted
           }
         }
         // اکانت پیش‌فرض admin اگر وجود نداشته باشه
         if (allUsers.length === 0) {
           const defaultAdmin = {
             __backendId: generateId(),
-            fullName: 'شهاب حمیدی',
-            username: 'shahab',
-            password: 'em',
+            fullName: 'ادمین پیش‌فرض',
+            username: 'admin',
+            password: 'admin123',
             role: 'admin'
           };
           allUsers.push(defaultAdmin);
           await saveUsers();
+          console.log('Added default admin:', defaultAdmin);
         }
-        // FIX: Sync with Google Sheets (از googlesheets.js – اگر لود نشه، skip می‌شه)
+        // FIX: Sync with Google Sheets (اگر لود شده)
         if (typeof syncUsersWithGoogleSheets === 'function') {
+          console.log('Attempting GS sync...');
           const syncSuccess = await syncUsersWithGoogleSheets();
-          if (!syncSuccess) {
-            console.warn('هشدار: همگام‌سازی اکانت‌ها با Google Sheets ناموفق بود');
+          if (syncSuccess) {
+            console.log('GS sync successful – users updated');
+          } else {
+            console.warn('GS sync failed – using local users');
           }
         } else {
           console.warn('googlesheets.js not loaded – skipping GS sync');
         }
-        console.log('Loaded users:', allUsers); // دیباگ: لیست users رو لاگ کن
+        console.log('Final loaded users:', allUsers.map(u => ({username: u.username, role: u.role}))); // دیباگ امن (بدون password)
         return allUsers;
       } catch (error) {
-        console.error('Error loading users from localStorage:', error);
+        console.error('Critical error in loadUsers:', error);
         allUsers = []; // ultimate fallback
         return [];
       }
@@ -91,12 +97,13 @@
     async function saveUsers(users) {
       try {
         localStorage.setItem(usersStorageKey, JSON.stringify(users));
+        console.log('Users saved to localStorage');
       } catch (error) {
-        console.error('Error saving users from localStorage:', error);
+        console.error('Error saving users to localStorage:', error);
       }
     }
 
-    // FIX: کپی map functions از googlesheets.js (اگر در script load شده، اما برای ایمنی کپی)
+    // FIX: کپی map functions از googlesheets.js
     function mapUserToGS(item) {
       return {
         'Unique ID': item.__backendId,
@@ -120,66 +127,80 @@
     // FIX: Sync function (کپی از index.js)
     async function syncUsersWithGoogleSheets() {
       try {
+        console.log('Calling GS for users...');
         const result = await callGoogleSheets('readAll', 'accounts');
-        if (result.success) {
+        console.log('GS response:', result);
+        if (result && result.success) {
           const gsUsers = result.data
             .map(mapGSToUser)
-            .filter(user => user.__backendId); // فقط رکوردهای معتبر
-          // جایگزینی allUsers با GS (keep default admin if not in GS)
+            .filter(user => user && user.__backendId); // فقط معتبر
+          // جایگزینی allUsers با GS (keep default admin)
           const defaultAdminExists = gsUsers.some(u => u.username === 'admin');
           if (!defaultAdminExists) {
             const defaultAdmin = {
               __backendId: generateId(),
-              fullName: 'شهاب حمیدی',
-              username: 'shahab',
-              password: 'em',
+              fullName: 'ادمین پیش‌فرض',
+              username: 'admin',
+              password: 'admin123',
               role: 'admin'
             };
             gsUsers.push(defaultAdmin);
           }
           allUsers = gsUsers;
-          await saveUsers(allUsers); // ذخیره محلی به‌روزرسانی‌شده
+          await saveUsers(allUsers);
+          console.log('GS sync complete –', gsUsers.length, 'users loaded');
           return true;
         }
+        console.warn('GS readAll failed:', result?.error || 'Unknown');
         return false;
       } catch (error) {
-        console.error('Error syncing users:', error);
+        console.error('Sync error:', error);
         return false;
       }
     }
 
-    // FIX: تابع showToast ساده (console-based برای login)
+    // FIX: تابع showToast ساده
     function showToast(message, icon = '✅') {
       console.log(`${icon} ${message}`);
-      // اگر toast UI بخوای، کد کامل از index.js کپی کن
+      // برای UI toast، alert ساده استفاده کن اگر بخوای
+      // alert(`${icon} ${message}`);
     }
 
-    // FIX: تابع handleLogin به‌روز‌شده با sync
+    // FIX: handleLogin بهبود‌یافته
     async function handleLogin(event) {
       event.preventDefault();
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
+      document.getElementById('login-error').classList.add('hidden'); // hide error
 
       if (!username || !password) {
         showToast('لطفاً یوزرنیم و رمز عبور را وارد کنید', '⚠️');
         return;
       }
 
-      // FIX: Sync users قبل از validate (load از GS)
-      await loadUsers();
+      console.log('Login attempt for:', username);
+      await loadUsers(); // sync/load
 
-      // حالا validate کن
       const user = allUsers.find(u => u.username === username && u.password === password);
+      console.log('Found user match:', !!user, user?.username); // دیباگ
+
       if (user) {
-        // ذخیره session با fullName (تضمینی)
-        localStorage.setItem('session', JSON.stringify({
-          loggedIn: true, 
-          fullName: user.fullName, 
-          username: user.username, 
-          role: user.role
-        }));
-        showToast('لاگین موفق! در حال انتقال...', '✅');
-        window.location.href = 'index.html';
+        // FIX: session رو با try-catch set کن
+        try {
+          const session = {
+            loggedIn: true, 
+            fullName: user.fullName || 'کاربر ناشناس', 
+            username: user.username, 
+            role: user.role
+          };
+          localStorage.setItem('session', JSON.stringify(session));
+          console.log('Session set:', session);
+          showToast('لاگین موفق! در حال انتقال...', '✅');
+          setTimeout(() => window.location.href = 'index.html', 500); // delay برای لاگ
+        } catch (saveError) {
+          console.error('Session save error:', saveError);
+          showToast('خطا در ذخیره جلسه – دوباره تلاش کنید', '❌');
+        }
       } else {
         document.getElementById('login-error').classList.remove('hidden');
         document.getElementById('password').value = '';
@@ -188,10 +209,10 @@
       }
     }
 
-    // فوکوس خودکار روی فیلد نام کاربری
+    // فوکوس و init
     document.addEventListener('DOMContentLoaded', async () => {
-      // FIX: Load اولیه users برای چک admin default
-      await loadUsers();
+      console.log('Login page loaded');
+      await loadUsers(); // initial load
       document.getElementById('username').focus();
     });
   </script>
