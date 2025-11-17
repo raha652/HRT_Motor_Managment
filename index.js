@@ -512,36 +512,60 @@ async function submitRoleUpdate(event) {
     showToast('خطا در به‌روزرسانی نقش', '❌');
   }
 }
-async function initApp() {
+
+ async function initApp() {
+  console.log('initApp started'); // دیباگ
+  // چک لاگین
   const sessionStr = localStorage.getItem('session');
+  console.log('Session from LS:', sessionStr); // دیباگ
+
   if (!sessionStr) {
+    console.log('No session – redirect to login');
     window.location.href = 'login.html';
     return;
   }
+
   let session;
   try {
     session = JSON.parse(sessionStr);
+    console.log('Parsed session:', session); // دیباگ
   } catch (e) {
-    localStorage.removeItem('session');
+    console.error('Session parse error:', e);
+    localStorage.removeItem('session'); // پاک کردن corrupted
     window.location.href = 'login.html';
     return;
   }
+
   if (!session.loggedIn) {
+    console.log('Not logged in – redirect');
     localStorage.removeItem('session');
     window.location.href = 'login.html';
     return;
   }
+
+  // Load users (حالا با sync)
   await loadUsers();
+  console.log('Users after load:', allUsers.map(u => u.username)); // دیباگ
+
+  // پیدا کردن currentUser
   const currentUser = allUsers.find(u => u.username === session.username);
+  console.log('Current user found:', currentUser?.username); // دیباگ
+
   if (!currentUser) {
+    console.error('Current user not found in allUsers – possible sync issue');
     localStorage.removeItem('session');
     window.location.href = 'login.html';
     return;
   }
-  window.currentUser = currentUser; 
+
+  window.currentUser = currentUser;
   currentUserRole = currentUser.role;
+
+  // FIX: session.fullName رو update کن
   session.fullName = currentUser.fullName;
-  localStorage.setItem('session', JSON.stringify(session));
+  localStorage.setItem('session', JSON.stringify(session)); // re-save
+
+  // نمایش نام و ... (بقیه کد بدون تغییر)
   if (document.getElementById('current-user')) {
     document.getElementById('current-user').textContent = currentUser.fullName || "کاربر ناشناس";
   }
@@ -1405,4 +1429,5 @@ function toggleUserDropdown() {
 document.addEventListener('DOMContentLoaded', initApp);
 if (window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {
   (function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99bbf8eb8072d381',t:'MTc2MjY3NzI4MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
+
 }
