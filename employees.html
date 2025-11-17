@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مدیریت کارمندان - سیستم مدیریت موتور سکیل ها</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="./global.css">
+ </head>
+ <body class="h-screen" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #667eea 50%, #764ba2 75%, #667eea 100%);">
+  <div class="h-screen p-6">
+   <div class="card p-6 mb-6" id="header-section">
+    <div class="flex items-center justify-between">
+     <div class="flex items-center gap-4">
+      <div class="motorcycle-icon" style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.2) 100%);">
+       🏍️
+      </div>
+      <div>
+       <h1 id="dashboard-title" class="text-3xl font-bold text-white">سیستم مدیریت موتور سکیل ها</h1>
+       <p id="company-name" class="text-gray-300 mt-1">پارکینگ مرکزی</p>
+      </div>
+     </div>
+     <div class="text-left">
+      <p class="text-sm text-gray-300">تاریخ</p>
+      <p id="current-date" class="text-lg font-bold text-white"></p>
+     </div>
+    </div>
+   </div>
+   <div id="employees-page">
+    <div class="card p-6">
+     <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-4"><button class="btn btn-secondary" onclick="navigateTo('./management.html')"> ← بازگشت به مدیریت </button>
+       <h2 class="text-2xl font-bold text-white">مدیریت کارمندان</h2>
+      </div><button class="btn btn-primary" onclick="openNewEmployeeModal()"> ➕ افزودن کارمند </button>
+     </div>
+     <div id="employees-list" class="space-y-4"></div>
+    </div>
+   </div>
+  </div>
+  <div id="password-modal" class="modal">
+   <div class="modal-content">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">🔐 احراز هویت</h2>
+    <div class="mb-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+     <p id="password-message" class="text-sm text-blue-800">برای دسترسی به این بخش، رمز عبور را وارد کنید</p>
+    </div>
+    <form id="password-form" onsubmit="verifyPassword(event)">
+     <div class="space-y-4">
+      <div><label class="block text-sm font-semibold text-gray-700 mb-2">رمز عبور</label> <input type="password" id="password-input" class="input-field" placeholder="رمز عبور را وارد کنید" required>
+      </div>
+      <div class="flex gap-3 mt-6"><button type="submit" class="btn btn-success flex-1">✅ تأیید</button> <button type="button" class="btn btn-secondary flex-1" onclick="closeModal('password-modal')">❌ انصراف</button>
+      </div>
+     </div>
+    </form>
+   </div>
+  </div>
+  <div id="new-request-modal" class="modal">
+   <div class="modal-content">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">درخواست جدید</h2>
+    <form id="new-request-form" onsubmit="submitNewRequest(event)">
+     <div class="space-y-4">
+      <div><label class="block text-sm font-semibold text-gray-700 mb-2">انتخاب دیپارتمنت</label>
+       <div class="relative"><button type="button" id="department-select" class="input-field text-right cursor-pointer flex items-center justify-between" onclick="toggleDepartmentDropdown()"> <span id="department-display">دیپارتمنت را انتخاب کنید</span> <span>▼</span> </button>
+        <div id="department-dropdown" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-hidden z-10 hidden">
+         <div class="p-3 border-b border-gray-200"><input type="text" id="department-search" class="w-full p-2 border border-gray-300 rounded-md text-sm" placeholder="🔍 جستجو در دیپارتمنت‌ها..." oninput="searchDepartments()">
+         </div>
+         <div id="department-options" class="max-h-48 overflow-y-auto">
+         </div>
+        </div><input type="hidden" id="selected-department" required>
+       </div>
+      </div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-2">انتخاب کارمند</label>
+       <div class="relative"><button type="button" id="employee-select" class="input-field text-right cursor-pointer flex items-center justify-between opacity-50" onclick="toggleEmployeeDropdown()" disabled> <span id="employee-display">ابتدا دیپارتمنت را انتخاب کنید</span> <span>▼</span> </button>
+        <div id="employee-dropdown" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-hidden z-10 hidden">
+         <div class="p-3 border-b border-gray-200"><input type="text" id="employee-search" class="w-full p-2 border border-gray-300 rounded-md text-sm" placeholder="🔍 جستجو در کارمندان..." oninput="searchEmployees()">
+         </div>
+         <div id="employee-options" class="max-h-48 overflow-y-auto">
+         </div>
+        </div><input type="hidden" id="selected-employee" required>
+       </div>
+      </div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-2">انتخاب موتور سکیل</label>
+       <div class="relative"><button type="button" id="motorcycle-select" class="input-field text-right cursor-pointer flex items-center justify-between opacity-50" onclick="toggleMotorcycleDropdown()" disabled> <span id="motorcycle-display">ابتدا دیپارتمنت را انتخاب کنید</span> <span>▼</span> </button>
+        <div id="motorcycle-dropdown" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-hidden z-10 hidden">
+         <div class="p-3 border-b border-gray-200"><input type="text" id="motorcycle-search" class="w-full p-2 border border-gray-300 rounded-md text-sm" placeholder="🔍 جستجو در موتور سکیل‌ها..." oninput="searchMotorcycles()">
+         </div>
+         <div id="motorcycle-options" class="max-h-48 overflow-y-auto">
+         </div>
+        </div><input type="hidden" id="selected-motorcycle" required>
+       </div>
+      </div>
+      <div class="flex gap-3 mt-6"><button type="submit" class="btn btn-success flex-1">✅ ثبت درخواست</button> <button type="button" class="btn btn-secondary flex-1" onclick="closeModal('new-request-modal')">❌ انصراف</button>
+      </div>
+     </div>
+    </form>
+   </div>
+  </div>
+  <div id="new-motorcycle-modal" class="modal">
+   <div class="modal-content">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">افزودن موتور سکیل جدید</h2>
+    <form id="new-motorcycle-form" onsubmit="submitNewMotorcycle(event)">
+     <div class="space-y-4">
+      <div><label class="block text-sm font-semibold text-gray-700 mb-2">نام موتور سکیل</label> <input type="text" id="motorcycle-name" class="input-field" placeholder="مثال: لمر" required>
+      </div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-2">رنگ</label> <input type="text" id="motorcycle-color" class="input-field" placeholder="مثال: آبی" required>
+      </div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-2">پلاک</label> <input type="text" id="motorcycle-plate" class="input-field" placeholder="مثال: TS-01" required>
+      </div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-2">دیپارتمنت</label> <input type="text" id="motorcycle-department" class="input-field" placeholder="مثال: پاور " required>
+      </div>
+      <div class="flex gap-3 mt-6"><button type="submit" class="btn btn-success flex-1">✅ ذخیره</button> <button type="button" class="btn btn-secondary flex-1" onclick="closeModal('new-motorcycle-modal')">❌ انصراف</button>
+      </div>
+     </div>
+    </form>
+   </div>
+  </div>
+  <div id="new-employee-modal" class="modal">
+   <div class="modal-content">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">افزودن کارمند جدید</h2>
+    <form id="new-employee-form" onsubmit="submitNewEmployee(event)">
+     <div class="space-y-4">
+      <div><label class="block text-sm font-semibold text-gray-700 mb-2">نام و نام خانوادگی</label> <input type="text" id="employee-name" class="input-field" placeholder="مثال: شهاب حمیدی" required>
+      </div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-2">آیدی</label> <input type="text" id="employee-id" class="input-field" placeholder="مثال: 1806" required>
+      </div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-2">دیپارتمنت</label> <input type="text" id="employee-department" class="input-field" placeholder="مثال: پاور " required>
+      </div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-2">شناسه اثر انگشت</label> <input type="text" id="employee-fingerprint" class="input-field" placeholder="مثال: SH001" required>
+      </div>
+      <div class="flex gap-3 mt-6"><button type="submit" class="btn btn-success flex-1">✅ ذخیره</button> <button type="button" class="btn btn-secondary flex-1" onclick="closeModal('new-employee-modal')">❌ انصراف</button>
+      </div>
+     </div>
+    </form>
+   </div>
+  </div>
+  <div id="toast" class="toast"><span id="toast-icon">✅</span> <span id="toast-message"></span>
+  </div>
+  <script src="googleSheets.js"></script>
+  <script src="./index.js"></script>
+ </body>
+</html>

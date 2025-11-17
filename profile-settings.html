@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تنظیمات پروفایل - سیستم مدیریت موتور سکیل ها</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="./global.css">
+</head>
+<body class="h-screen" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #667eea 50%, #764ba2 75%, #667eea 100%);">
+  <div class="h-screen p-6">
+    <div class="card p-6 mb-6" id="header-section">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="motorcycle-icon" style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.2) 100%);">
+            👤
+          </div>
+          <div>
+            <h1 class="text-3xl font-bold text-white">تنظیمات پروفایل</h1>
+            <p class="text-gray-300 mt-1">ویرایش اطلاعات شخصی</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <button onclick="navigateTo('./index.html')" class="btn btn-secondary px-4 py-2 rounded">← بازگشت به داشبورد</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-8 max-w-md mx-auto">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">ویرایش پروفایل</h2>
+      <form id="profile-form" onsubmit="updateProfile(event)">
+        <div class="space-y-4">
+          <div id="photo-preview" class="w-20 h-20 rounded-full bg-gray-200 mx-auto mb-4 overflow-hidden hidden">
+            <img id="preview-img" src="" class="w-full h-full object-cover" alt="Preview">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">عکس پروفایل</label>
+            <input type="file" id="profile-photo" class="input-field text-gray-700 w-full" accept="image/*" onchange="previewPhoto(this)">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">نام کامل</label>
+            <input type="text" id="profile-fullname" class="input-field text-gray-700 w-full" placeholder="نام و نام خانوادگی" required>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">رمز عبور جدید</label>
+            <input type="password" id="profile-password" class="input-field text-gray-700 w-full" placeholder="رمز عبور جدید را وارد کنید" required>
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button type="submit" class="btn btn-success flex-1">✅ ذخیره تغییرات</button>
+            <button type="button" onclick="logout()" class="btn btn-secondary flex-1">خروج</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div id="toast" class="toast"><span id="toast-icon">✅</span> <span id="toast-message"></span></div>
+  </div>
+
+  <footer class="absolute bottom-2 left-6 right-6 text-center flex justify-between items-center text-white text-sm border-t border-gray-300">
+    <div class="mt-2">
+      Developed by ShAhAb HaMiDi & <a href="https://github.com/emadrasooli" target="_blank">Emad Rasooli</a>
+    </div>
+    <div>
+      <div class="flex items-center gap-2">
+        <p class="text-white">تاریخ:</p>
+        <p id="current-date" class="text-white text-sm"></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="./profile-settings.js"></script>
+</body>
+</html>
