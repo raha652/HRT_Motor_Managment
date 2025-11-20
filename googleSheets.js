@@ -42,11 +42,11 @@ async function syncEmployeesWithGoogleSheets(allDataRef) {
     if (result.success) {
       const gsEmployees = result.data
         .map(mapGSToEmployee)
-        .filter(emp => emp.__backendId); 
+        .filter(emp => emp.__backendId);
       const nonEmployeeData = allDataRef.filter(d => d.type !== 'employee');
-      allDataRef.length = 0; 
+      allDataRef.length = 0;
       allDataRef.push(...nonEmployeeData, ...gsEmployees);
-      await saveData(allDataRef); 
+      await saveData(allDataRef);
       return true;
     }
     return false;
@@ -81,11 +81,11 @@ async function syncMotorcyclesWithGoogleSheets(allDataRef) {
       const gsMotorcycles = result.data
         .map(mapGSToMotorcycle)
         .filter(moto => moto.__backendId);
-     
+   
       const nonMotorcycleData = allDataRef.filter(d => d.type !== 'motorcycle');
-      allDataRef.length = 0; 
+      allDataRef.length = 0;
       allDataRef.push(...nonMotorcycleData, ...gsMotorcycles);
-      await saveData(allDataRef); 
+      await saveData(allDataRef);
       return true;
     }
     return false;
@@ -94,7 +94,6 @@ async function syncMotorcyclesWithGoogleSheets(allDataRef) {
     return false;
   }
 }
-
 function mapRequestToGS(item) {
   return {
     'Unique ID': item.__backendId,
@@ -114,18 +113,17 @@ function mapRequestToGS(item) {
   };
 }
 function mapGSToRequest(record) {
-  
   function formatDateToString(value) {
     if (typeof value === 'string') {
-      if (value.includes('T')) { 
+      if (value.includes('T')) {
         const date = new Date(value);
-        if (!isNaN(date.getTime())) { 
+        if (!isNaN(date.getTime())) {
           const year = date.getFullYear();
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const day = String(date.getDate()).padStart(2, '0');
           return `${year}/${month}/${day}`;
         }
-      } else if (value.includes('/')) { 
+      } else if (value.includes('/')) {
         return value;
       }
     } else if (value instanceof Date) {
@@ -134,26 +132,23 @@ function mapGSToRequest(record) {
       const day = String(value.getDate()).padStart(2, '0');
       return `${year}/${month}/${day}`;
     }
-    return value || ''; 
+    return value || '';
   }
- 
- 
   function formatTimeToString(value) {
     if (typeof value === 'string') {
-      if (value.includes('T')) { 
+      if (value.includes('T')) {
         const date = new Date(value);
         if (!isNaN(date.getTime())) {
           return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         }
       } else {
-        return value; 
+        return value;
       }
     } else if (value instanceof Date) {
       return value.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     }
     return value || '';
   }
- 
   return {
     type: 'request',
     __backendId: record['Unique ID'],
@@ -165,26 +160,39 @@ function mapGSToRequest(record) {
     motorcycleColor: record['رنگ موتور سکیل'],
     motorcyclePlate: record['پلاک موتور سکیل'],
     motorcycleDepartment: record['دیپارتمنت موتور سکیل'],
-    requestDate: formatDateToString(record['تاریخ درخواست']), 
+    requestDate: formatDateToString(record['تاریخ درخواست']),
     requesterFullName: record['نام درخواست کننده'],
-    exitTime: formatTimeToString(record['زمان خروج']) || '', 
-    entryTime: formatTimeToString(record['زمان ورود']) || '', 
-    status: record['وضعیت'],
-    employeeId: record['آیدی کارمند'], 
-    motorcycleId: record['Unique ID'] 
+    exitTime: formatTimeToString(record['زمان خروج']) || '',
+    entryTime: formatTimeToString(record['زمان ورود']) || '',
+    status: record['وضعیت']
   };
 }
 async function syncRequestsWithGoogleSheets(allDataRef) {
   try {
     const result = await callGoogleSheets('readAll', 'request');
     if (result.success) {
-      const gsRequests = result.data
+      let gsRequests = result.data
         .map(mapGSToRequest)
-        .filter(req => req.__backendId); 
+        .filter(req => req.__backendId);
       const nonRequestData = allDataRef.filter(d => d.type !== 'request');
-      allDataRef.length = 0; 
+      const motorcycles = nonRequestData.filter(d => d.type === 'motorcycle');
+      for (let req of gsRequests) {
+        const matchingMotor = motorcycles.find(m => 
+          m.motorcycleName === req.motorcycleName &&
+          m.motorcycleColor === req.motorcycleColor &&
+          m.motorcyclePlate === req.motorcyclePlate &&
+          m.motorcycleDepartment === req.motorcycleDepartment
+        );
+        if (matchingMotor) {
+          req.motorcycleId = matchingMotor.__backendId;
+        } else {
+          console.warn('No matching motorcycle found for request:', req);
+          // Optionally filter out invalid requests: gsRequests = gsRequests.filter(r => r !== req);
+        }
+      }
+      allDataRef.length = 0;
       allDataRef.push(...nonRequestData, ...gsRequests);
-      await saveData(allDataRef); 
+      await saveData(allDataRef);
       return true;
     }
     return false;
@@ -193,13 +201,12 @@ async function syncRequestsWithGoogleSheets(allDataRef) {
     return false;
   }
 }
-
 function mapUserToGS(item) {
   return {
     'Unique ID': item.__backendId,
     'نام کامل': item.fullName,
     'نام کاربری': item.username,
-    // 'رمز عبور': item.password,
+    'رمز عبور': item.password,
     'نقش': item.role
   };
 }
@@ -208,7 +215,7 @@ function mapGSToUser(record) {
     __backendId: record['Unique ID'],
     fullName: record['نام کامل'],
     username: record['نام کاربری'],
-    // password: record['رمز عبور'],
+    password: record['رمز عبور'],
     role: record['نقش']
   };
 }

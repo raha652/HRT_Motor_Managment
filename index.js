@@ -8,12 +8,12 @@ const defaultConfig = {
   card_color: '#ffffff'
 };
 let allData = [];
-let allUsers = []; 
+let allUsers = [];
 let currentRecordCount = 0;
 let currentPasswordType = '';
 let currentStatusFilter = 'all';
-let departments = []; 
-let currentUserRole = ''; 
+let departments = [];
+let currentUserRole = '';
 let historySearchTerm = '';
 let historyFromDate = '';
 let historyToDate = '';
@@ -35,15 +35,15 @@ JalaliDate.jalaliToGregorian = function(j_y, j_m, j_d) {
   var gy = 1600 + 400 * parseInt(g_day_no / 146097);
   g_day_no = g_day_no % 146097;
   var leap = true;
-  if (g_day_no >= 36525) 
+  if (g_day_no >= 36525)
   {
     g_day_no--;
-    gy += 100 * parseInt(g_day_no / 36524); 
+    gy += 100 * parseInt(g_day_no / 36524);
     g_day_no = g_day_no % 36524;
     if (g_day_no >= 365) g_day_no++;
     else leap = false;
   }
-  gy += 4 * parseInt(g_day_no / 1461); 
+  gy += 4 * parseInt(g_day_no / 1461);
   g_day_no %= 1461;
   if (g_day_no >= 366) {
     leap = false;
@@ -59,8 +59,8 @@ JalaliDate.jalaliToGregorian = function(j_y, j_m, j_d) {
   gd = gd < 10 ? "0" + gd : gd;
   return [gy, gm, gd];
 };
-const dataStorageKey = 'motorcycleManagementData'; 
-const usersStorageKey = 'userAccountsData'; 
+const dataStorageKey = 'motorcycleManagementData';
+const usersStorageKey = 'userAccountsData';
 function generateId() {
   return Date.now().toString() + Math.random().toString(36).substr(2, 9);
 }
@@ -84,7 +84,7 @@ async function saveData(data) {
 async function loadUsers() {
   try {
     const stored = localStorage.getItem(usersStorageKey);
-    allUsers = stored ? JSON.parse(stored) : [];
+    allUsers = stored && stored !== 'undefined' ? JSON.parse(stored) : [];
     if (allUsers.length === 0) {
       const defaultAdmin = {
         __backendId: generateId(),
@@ -175,7 +175,7 @@ async function updateUserRole(userId, newRole) {
   const gsResult = await callGoogleSheets('update', 'accounts', gsData);
   if (!gsResult.success) {
     showToast('خطا در به‌روزرسانی اکانت در Google Sheets', '❌');
-    user.role = user.role === 'admin' ? 'admin' : 'user'; 
+    user.role = user.role === 'admin' ? 'admin' : 'user';
     await saveUsers(allUsers);
     return { isOk: false };
   }
@@ -190,7 +190,7 @@ async function syncUsersWithGoogleSheets() {
     if (result.success) {
       const gsUsers = result.data
         .map(mapGSToUser)
-        .filter(user => user.__backendId); 
+        .filter(user => user.__backendId);
       const defaultAdminExists = gsUsers.some(u => u.username === 'admin');
       if (!defaultAdminExists) {
         const defaultAdmin = {
@@ -203,7 +203,7 @@ async function syncUsersWithGoogleSheets() {
         gsUsers.push(defaultAdmin);
       }
       allUsers = gsUsers;
-      await saveUsers(allUsers); 
+      await saveUsers(allUsers);
       return true;
     }
     return false;
@@ -228,7 +228,7 @@ window.dataSdk = {
       showToast('هشدار: همگام‌سازی درخواست‌ها با Google Sheets ناموفق بود', '⚠️');
     }
     currentRecordCount = allData.length;
-    updateDepartments(); 
+    updateDepartments();
     if (handler && handler.onDataChanged) {
       handler.onDataChanged(allData);
     }
@@ -240,7 +240,7 @@ window.dataSdk = {
       return { isOk: false };
     }
     item.__backendId = generateId();
-    item.type = item.type || 'unknown'; 
+    item.type = item.type || 'unknown';
     if (item.type === 'employee') {
       const gsData = mapEmployeeToGS(item);
       const gsResult = await callGoogleSheets('create', 'employees', gsData);
@@ -268,7 +268,7 @@ window.dataSdk = {
     allData.push(item);
     await saveData(allData);
     currentRecordCount = allData.length;
-    updateDepartments(); 
+    updateDepartments();
     if (dataHandler && dataHandler.onDataChanged) {
       dataHandler.onDataChanged(allData);
     }
@@ -303,10 +303,10 @@ window.dataSdk = {
         return { isOk: false };
       }
     }
-    allData[index] = { ...allData[index], ...item }; 
+    allData[index] = { ...allData[index], ...item };
     await saveData(allData);
     currentRecordCount = allData.length;
-    updateDepartments(); 
+    updateDepartments();
     if (dataHandler && dataHandler.onDataChanged) {
       dataHandler.onDataChanged(allData);
     }
@@ -341,7 +341,7 @@ window.dataSdk = {
     allData.splice(index, 1);
     await saveData(allData);
     currentRecordCount = allData.length;
-    updateDepartments(); 
+    updateDepartments();
     if (dataHandler && dataHandler.onDataChanged) {
       dataHandler.onDataChanged(allData);
     }
@@ -350,7 +350,7 @@ window.dataSdk = {
 };
 function updateDepartments() {
   const uniqueDepartments = [...new Set(allData.filter(d => d.type === 'motorcycle').map(d => d.motorcycleDepartment))];
-  departments = uniqueDepartments.sort(); 
+  departments = uniqueDepartments.sort();
 }
 const passwords = {
   request: '123',
@@ -362,7 +362,7 @@ const dataHandler = {
   onDataChanged(data) {
     allData = data;
     currentRecordCount = data.length;
-    updateDepartments(); 
+    updateDepartments();
     updateCurrentPage();
   }
 };
@@ -417,7 +417,7 @@ function logout() {
     window.idleInterval = null;
   }
   localStorage.removeItem('session');
-  window.location.href = 'login.html';
+  window.location.href = './login.html';
 }
 function renderAccounts() {
   const container = document.getElementById('accounts-list');
@@ -512,60 +512,36 @@ async function submitRoleUpdate(event) {
     showToast('خطا در به‌روزرسانی نقش', '❌');
   }
 }
-
- async function initApp() {
-  console.log('initApp started'); // دیباگ
-  // چک لاگین
+async function initApp() {
   const sessionStr = localStorage.getItem('session');
-  console.log('Session from LS:', sessionStr); // دیباگ
-
   if (!sessionStr) {
-    console.log('No session – redirect to login');
-    window.location.href = 'login.html';
+    window.location.href = './login.html';
     return;
   }
-
   let session;
   try {
     session = JSON.parse(sessionStr);
-    console.log('Parsed session:', session); // دیباگ
   } catch (e) {
-    console.error('Session parse error:', e);
-    localStorage.removeItem('session'); // پاک کردن corrupted
-    window.location.href = 'login.html';
+    localStorage.removeItem('session');
+    window.location.href = './login.html';
     return;
   }
-
   if (!session.loggedIn) {
-    console.log('Not logged in – redirect');
     localStorage.removeItem('session');
-    window.location.href = 'login.html';
+    window.location.href = './login.html';
     return;
   }
-
-  // Load users (حالا با sync)
   await loadUsers();
-  console.log('Users after load:', allUsers.map(u => u.username)); // دیباگ
-
-  // پیدا کردن currentUser
   const currentUser = allUsers.find(u => u.username === session.username);
-  console.log('Current user found:', currentUser?.username); // دیباگ
-
   if (!currentUser) {
-    console.error('Current user not found in allUsers – possible sync issue');
     localStorage.removeItem('session');
-    window.location.href = 'login.html';
+    window.location.href = './login.html';
     return;
   }
-
   window.currentUser = currentUser;
   currentUserRole = currentUser.role;
-
-  // FIX: session.fullName رو update کن
   session.fullName = currentUser.fullName;
-  localStorage.setItem('session', JSON.stringify(session)); // re-save
-
-  // نمایش نام و ... (بقیه کد بدون تغییر)
+  localStorage.setItem('session', JSON.stringify(session));
   if (document.getElementById('current-user')) {
     document.getElementById('current-user').textContent = currentUser.fullName || "کاربر ناشناس";
   }
@@ -647,10 +623,10 @@ function setupIdleLogout() {
   if (window.idleInterval) {
     clearInterval(window.idleInterval);
   }
-  window.idleTime = 0; 
+  window.idleTime = 0;
   window.idleInterval = setInterval(() => {
     window.idleTime += 1;
-    if (window.idleTime >= 600) { 
+    if (window.idleTime >= 600) {
       showToast('به دلیل عدم فعالیت، شما لاگ‌اوت شدید', '⚠️');
       logout();
       clearInterval(window.idleInterval);
@@ -818,19 +794,21 @@ function renderMotorcycleStatus(motorcycles, requests) {
   const container = document.getElementById('motorcycle-status-list');
   if (!container) return;
   if (motorcycles.length === 0) {
-    container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-300"><p class="text-lg">هیچ موتور سکیلی ثبت نشده است</p></div>';
+    container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-300"><p class="text-lg">هیچ موتورسیکلی ثبت نشده است</p></div>';
     return;
   }
   let availableCount = 0;
   let pendingCount = 0;
   let inUseCount = 0;
   const motorcycleStatusData = motorcycles.map(motorcycle => {
+    // Find active request for this motorcycle
     const activeRequest = requests.find(r =>
       r.motorcycleId === motorcycle.__backendId &&
       (r.status === 'pending' || r.status === 'active')
     );
     let status, statusClass, statusIcon, statusText, employeeInfo;
     if (!activeRequest) {
+      // Available in parking
       status = 'available';
       statusClass = 'bg-gradient-to-br from-green-500/20 to-emerald-600/20 border-green-400/30';
       statusIcon = '🅿️';
@@ -838,6 +816,7 @@ function renderMotorcycleStatus(motorcycles, requests) {
       employeeInfo = '';
       availableCount++;
     } else if (activeRequest.status === 'pending') {
+      // Waiting for exit
       status = 'pending';
       statusClass = 'bg-gradient-to-br from-yellow-500/20 to-orange-600/20 border-yellow-400/30';
       statusIcon = '⏳';
@@ -845,6 +824,7 @@ function renderMotorcycleStatus(motorcycles, requests) {
       employeeInfo = `👤 ${activeRequest.employeeName}`;
       pendingCount++;
     } else if (activeRequest.status === 'active') {
+      // In use
       status = 'in-use';
       statusClass = 'bg-gradient-to-br from-red-500/20 to-pink-600/20 border-red-400/30';
       statusIcon = '🔄';
@@ -862,12 +842,15 @@ function renderMotorcycleStatus(motorcycles, requests) {
       activeRequest
     };
   });
+  // Update summary counts
   if (document.getElementById('available-count')) document.getElementById('available-count').textContent = availableCount;
   if (document.getElementById('pending-count')) document.getElementById('pending-count').textContent = pendingCount;
   if (document.getElementById('in-use-count')) document.getElementById('in-use-count').textContent = inUseCount;
+  // Apply current filter
   const filteredData = currentStatusFilter === 'all' ?
     motorcycleStatusData :
     motorcycleStatusData.filter(data => data.status === currentStatusFilter);
+  // Update filtered count
     document.getElementById('filtered-count').textContent = filteredData.length;
   if (filteredData.length === 0) {
     const filterNames = {
@@ -876,7 +859,7 @@ function renderMotorcycleStatus(motorcycles, requests) {
       'in-use': 'در حال استفاده'
     };
     const filterName = filterNames[currentStatusFilter] || 'این فیلتر';
-    container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-300"><p class="text-lg">هیچ موتور سکیلی با وضعیت "${filterName}" یافت نشد</p></div>`;
+    container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-300"><p class="text-lg">هیچ موتورسیکلی با وضعیت "${filterName}" یافت نشد</p></div>`;
     return;
   }
   container.innerHTML = filteredData.map(data => `
@@ -926,10 +909,10 @@ function filterHistory(completedRequests) {
   if (fromDateStr || toDateStr) {
     filtered = filtered.filter(r => {
       const parts = r.requestDate.split('/');
-      if (parts.length !== 3) return true; 
-      const [j_y, j_m, j_d] = parts.map(p => parseInt(p.replace(/[۰-۹]/g, d => String.fromCharCode(d.charCodeAt(0) - 1728)))); 
+      if (parts.length !== 3) return true;
+      const [j_y, j_m, j_d] = parts.map(p => parseInt(p.replace(/[۰-۹]/g, d => String.fromCharCode(d.charCodeAt(0) - 1728))));
       const gregDate = JalaliDate.jalaliToGregorian(j_y, j_m, j_d);
-      const reqDate = `${gregDate[0]}-${gregDate[1]}-${gregDate[2]}`; 
+      const reqDate = `${gregDate[0]}-${gregDate[1]}-${gregDate[2]}`;
       if (fromDateStr && reqDate < fromDateStr) return false;
       if (toDateStr && reqDate > toDateStr) return false;
       return true;
@@ -1171,9 +1154,9 @@ function verifyPassword(event) {
 function openNewRequestModal() {
   const employees = allData.filter(d => d.type === 'employee');
   const motorcycles = allData.filter(d => d.type === 'motorcycle');
-  updateModalSelects(employees, motorcycles); 
+  updateModalSelects(employees, motorcycles);
   document.getElementById('new-request-modal').classList.add('active');
-  populateDepartmentDropdown(); 
+  populateDepartmentDropdown();
 }
 function openNewMotorcycleModal() {
   document.getElementById('new-motorcycle-modal').classList.add('active');
@@ -1197,16 +1180,14 @@ async function submitNewRequest(event) {
   const employee = allData.find(d => d.__backendId === employeeId);
   const motorcycle = allData.find(d => d.__backendId === motorcycleId);
   const now = new Date();
- 
   const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0'); 
+  const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
   const requestDate = `${year}/${month}/${day}`;
- 
   let requesterFullName = 'ناشناس';
   if (window.currentUser && window.currentUser.fullName) {
     requesterFullName = window.currentUser.fullName;
-    console.log('Requester from currentUser:', requesterFullName); 
+    console.log('Requester from currentUser:', requesterFullName);
   } else {
     try {
       const session = JSON.parse(localStorage.getItem('session'));
@@ -1220,10 +1201,8 @@ async function submitNewRequest(event) {
       console.error('Session parse error:', e);
     }
   }
- 
   console.log('Request Date (fixed):', requestDate);
   console.log('Requester FullName:', requesterFullName);
- 
   const requestData = {
     type: 'request',
     employeeId: employee.employeeId,
@@ -1235,7 +1214,7 @@ async function submitNewRequest(event) {
     motorcycleColor: motorcycle.motorcycleColor,
     motorcyclePlate: motorcycle.motorcyclePlate,
     motorcycleDepartment: motorcycle.motorcycleDepartment,
-    requestDate: requestDate, 
+    requestDate: requestDate,
     requesterFullName: requesterFullName,
     exitTime: '',
     entryTime: '',
@@ -1429,6 +1408,4 @@ function toggleUserDropdown() {
 document.addEventListener('DOMContentLoaded', initApp);
 if (window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {
   (function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99bbf8eb8072d381',t:'MTc2MjY3NzI4MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
-
 }
-
